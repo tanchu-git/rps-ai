@@ -1,31 +1,45 @@
-use std::collections::HashMap;
-
-#[derive(PartialEq, PartialOrd, Debug)]
+#[derive(PartialEq)]
 enum Choice {
     Rock,
     Paper,
     Scissor,
 }
-
+impl Choice {
+    fn rules(&self) -> Self {
+        match self {
+            Choice::Rock => Choice::Scissor,
+            Choice::Paper => Choice::Rock,
+            Choice::Scissor => Choice::Paper,
+        }
+    }
+}
 struct Player {
     name: String,
     choice: Choice,
 }
 
 struct Game {
-    rounds: u8,
-    round: Vec<Round>,
+    total: u8,
+    rounds: Vec<Round>,
 }
-
+#[derive(Debug)]
 struct Round {
     id: u8,
-    players: HashMap<String, Choice>,
-    winner: String,
+    result: String,
 }
 
 impl Player {
-    pub fn set_name(&mut self, name: String) {
-        self.name = name;
+    pub fn new(name: &str, choice: &str) -> Self {
+        let choice: Choice = match choice {
+            "rock" => Choice::Rock,
+            "paper" => Choice::Paper,
+            _ => Choice::Scissor,
+        };
+
+        Self {
+            name: name.to_string(),
+            choice,
+        }
     }
 
     pub fn choice(&mut self, choice: &str) {
@@ -37,45 +51,68 @@ impl Player {
     }
 }
 
-impl Round {
-    pub fn check_winner(round: u8, player: Player, ai: Player) {
-        let mut players = HashMap::new();
-        let mut winner = String::new(); 
+impl Game {
+    pub fn play_round(&self, round: u8, player: Player, ai: Player) -> Round {
+        let (player_beats, ai_beats) = (player.choice.rules(), ai.choice.rules());
 
-        if player.choice == ai.choice {
-            winner = String::from("Tie");
-        }
-        match player.choice {
-            Choice::Rock => {
-                if ai.choice == Choice::Paper {
-                    winner = String::from("AI");
-                } else {
-                    winner = String::from("Player");
-                }
-            },
-            Choice::Paper => {
-                if ai.choice == Choice::Scissor {
-                    winner = String::from("AI");
-                } else {
-                    winner = String::from("Player");
-                }
-            },
-            Choice::Scissor => {
-                if ai.choice == Choice::Rock {
-                    winner = String::from("AI");
-                } else {
-                    winner = String::from("Player");
-                }
-            }
-        };    
-
-        players.insert(player.name, player.choice);
-        players.insert(ai.name, ai.choice);
-
-        let round = Round {
-            id: round,
-            players,
-            winner,
+        let result = if player_beats == ai.choice {
+            player.name
+        } else if ai_beats == player.choice {
+            ai.name
+        } else {
+            String::from("Tie")
         };
+
+        let round = Round { id: round, result };
+
+        round
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_winner() {
+        let game = Game {
+            total: 5,
+            rounds: vec![],
+        };
+
+        let mut player = Player::new("Yonda", "rock");
+        let mut ai = Player::new("Chat-GPT", "rock");
+        let mut round = game.play_round(1, player, ai);
+        assert_eq!("Tie", round.result);
+
+        player = Player::new("Yonda", "rock");
+        ai = Player::new("Chat-GPT", "scissor");
+        round = game.play_round(1, player, ai);
+        assert_eq!("Yonda", round.result);
+
+        player = Player::new("Yonda", "rock");
+        ai = Player::new("Chat-GPT", "paper");
+        round = game.play_round(1, player, ai);
+        assert_eq!("Chat-GPT", round.result);
+
+        player = Player::new("Yonda", "scissor");
+        ai = Player::new("Chat-GPT", "rock");
+        round = game.play_round(1, player, ai);
+        assert_eq!("Chat-GPT", round.result);
+
+        player = Player::new("Yonda", "scissor");
+        ai = Player::new("Chat-GPT", "paper");
+        round = game.play_round(1, player, ai);
+        assert_eq!("Yonda", round.result);
+
+        player = Player::new("Yonda", "paper");
+        ai = Player::new("Chat-GPT", "scissor");
+        round = game.play_round(1, player, ai);
+        assert_eq!("Chat-GPT", round.result);
+
+        player = Player::new("Yonda", "paper");
+        ai = Player::new("Chat-GPT", "rock");
+        round = game.play_round(1, player, ai);
+        assert_eq!("Yonda", round.result);
     }
 }
