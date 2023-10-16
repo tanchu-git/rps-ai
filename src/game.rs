@@ -4,6 +4,7 @@ enum Choice {
     Paper,
     Scissor,
 }
+
 impl Choice {
     fn rules(&self) -> Self {
         match self {
@@ -13,6 +14,7 @@ impl Choice {
         }
     }
 }
+
 struct Player {
     name: String,
     choice: Choice,
@@ -22,6 +24,7 @@ struct Game {
     total: u8,
     rounds: Vec<Round>,
 }
+
 #[derive(Debug)]
 struct Round {
     id: u8,
