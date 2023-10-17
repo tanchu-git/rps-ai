@@ -1,3 +1,6 @@
+use crate::player::Player;
+use std::collections::HashMap;
+
 #[derive(PartialEq)]
 pub enum Choice {
     Rock,
@@ -15,90 +18,73 @@ impl Choice {
     }
 }
 
-pub struct Player {
-    name: String,
-    choice: Choice,
-}
-
-#[derive(Debug)]
-pub struct Game {
-    total: u8,
-    rounds: Vec<Round>,
-}
-
-#[derive(Debug)]
 pub struct Round {
-    id: u8,
+    id: u32,
     result: String,
-}
-
-impl Player {
-    pub fn new(name: &str, choice: &str) -> Self {
-        let choice: Choice = match choice {
-            "rock" => Choice::Rock,
-            "paper" => Choice::Paper,
-            _ => Choice::Scissor,
-        };
-
-        Self {
-            name: name.to_string(),
-            choice,
-        }
-    }
-
-    pub fn set_name(&mut self, name: &str) {
-        self.name = name.to_string();
-    }
-
-    pub fn choice(&mut self, choice: &str) -> Result<String, ()>{
-        let result = match choice {
-            "rock" => {
-                self.choice = Choice::Rock;
-                Ok(String::from("You choosed rock!"))
-            }
-            "paper" => {
-                self.choice = Choice::Paper;
-                Ok(String::from("You choosed paper!"))
-            }
-            "scissor" => {
-                self.choice = Choice::Scissor;
-                Ok(String::from("You choosed scissor!"))
-            }
-            _ => Err(())
-        };
-
-        result
-    }
-}
-
-impl Game {
-    pub fn new() -> Self {
-        Self {
-            total: 5,
-            rounds: vec![],
-        }
-    }
-
-    pub fn play_round(&self, round: u8, player: &Player, ai: &Player) -> Round {
-        let (player_beats, ai_beats) = (player.choice.rules(), ai.choice.rules());
-
-        let result = if player_beats == ai.choice {
-            player.name.clone()
-        } else if ai_beats == player.choice {
-            ai.name.clone()
-        } else {
-            String::from("Tie")
-        };
-
-        let round = Round { id: round, result };
-
-        round
-    }
 }
 
 impl Round {
     pub fn get_result(&self) -> &str {
-        self.result.as_str()
+        &self.result
+    }
+
+    pub fn get_round(&self) -> u32 {
+        self.id
+    }
+}
+
+pub struct Game {
+    rounds: Vec<Round>,
+}
+
+impl Game {
+    pub fn new() -> Self {
+        Self { rounds: vec![] }
+    }
+
+    pub fn play_round(&self, id: u32, player: &Player, ai: &Player) -> Round {
+        let (player_beats, ai_beats) = (player.choice().rules(), ai.choice().rules());
+
+        let result = if &player_beats == ai.choice() {
+            player.get_name().to_string()
+        } else if &ai_beats == player.choice() {
+            ai.get_name().to_string()
+        } else {
+            String::from("Tie")
+        };
+
+        let round = Round { id, result };
+
+        round
+    }
+
+    pub fn save_round(&mut self, round: Round) {
+        self.rounds.push(round);
+    }
+
+    pub fn three_wins(&self) -> bool {
+        let mut round_iter = self.rounds.iter();
+
+        let mut score: HashMap<&str, u8> = HashMap::new();
+
+        // Tallying wins for each player using a hash map
+        for round in round_iter.by_ref() {
+            let count = score.entry(&round.result).or_insert(0);
+            *count += 1;
+        }
+
+        println!("{score:?}");
+
+        // Check for 3 wins
+        for (key, value) in score.iter() {
+            let b = match value {
+                3 if *key == "Human" || *key == "Chat-GPT" => false,
+                _ => continue,
+            };
+
+            return b;
+        }
+        true
     }
 }
 
@@ -107,42 +93,23 @@ mod test {
     use super::*;
 
     #[test]
-    fn test_winner() {
+    fn test_winner_and_integration() {
         let game = Game::new();
 
-        let mut player = Player::new("Yonda", "rock");
+        let winning_choices = vec!["rock", "paper", "scissor"];
+        let losing_choices = vec!["scissor", "rock", "paper"];
+
+        let mut player = Player::new("Human", "rock");
         let mut ai = Player::new("Chat-GPT", "rock");
         let mut round = game.play_round(1, &player, &ai);
         assert_eq!("Tie", round.get_result());
 
-        player = Player::new("Yonda", "rock");
-        ai = Player::new("Chat-GPT", "scissor");
-        round = game.play_round(2, &player, &ai);
-        assert_eq!("Yonda", round.get_result());
-
-        player = Player::new("Yonda", "rock");
-        ai = Player::new("Chat-GPT", "paper");
-        round = game.play_round(1, &player, &ai);
-        assert_eq!("Chat-GPT", round.get_result());
-
-        player = Player::new("Yonda", "scissor");
-        ai = Player::new("Chat-GPT", "rock");
-        round = game.play_round(1, &player, &ai);
-        assert_eq!("Chat-GPT", round.get_result());
-
-        player = Player::new("Yonda", "scissor");
-        ai = Player::new("Chat-GPT", "paper");
-        round = game.play_round(1, &player, &ai);
-        assert_eq!("Yonda", round.get_result());
-
-        player = Player::new("Yonda", "paper");
-        ai = Player::new("Chat-GPT", "scissor");
-        round = game.play_round(1, &player, &ai);
-        assert_eq!("Chat-GPT", round.get_result());
-
-        player = Player::new("Yonda", "paper");
-        ai = Player::new("Chat-GPT", "rock");
-        round = game.play_round(1, &player, &ai);
-        assert_eq!("Yonda", round.get_result());
+        let mut losing_iter = losing_choices.iter();
+        for choice in winning_choices {
+            player.choose(choice).unwrap();
+            ai.choose(losing_iter.next().unwrap()).unwrap();
+            round = game.play_round(2, &player, &ai);
+            assert_eq!("Human", round.get_result());
+        }
     }
 }

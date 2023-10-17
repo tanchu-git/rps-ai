@@ -1,27 +1,22 @@
-use game::{Game, Player};
+use crate::player::Player;
+use game::Game;
 use std::io;
 
 mod game;
+mod player;
 
 fn main() {
-    let game = Game::new();
-    let mut player = Player::new("Player", "");
-    let mut ai = Player::new("AI", "paper");
+    let mut game = Game::new();
+    let mut player = Player::new("Human", "");
+    let mut ai = Player::new("Chat-GPT", "paper");
+    let mut round_id = 1;
 
     println!("Play a game of rock, paper and scissor with Chat-GPT!");
-    println!("Best of five!");
-    // println!("Please choose your name: ");        
+    println!("First to 3 wins!");
 
-    // let mut name = String::new();
+    let mut game_on = true;
 
-    // // Take user input from terminal
-    // io::stdin()
-    //     .read_line(&mut name)
-    //     .expect("Failed to read input");
-
-    // player.set_name(name.trim());
-
-    loop {      
+    while game_on {
         println!("Please make your choice: ");
 
         let mut choice = String::new();
@@ -31,10 +26,9 @@ fn main() {
             .read_line(&mut choice)
             .expect("Failed to read input");
 
-        match player.choice(&choice.trim().to_lowercase()) {
+        match player.choose(&choice.trim().to_lowercase()) {
             Ok(c) => {
                 println!("{c}");
-                c
             }
             Err(()) => {
                 println!("\nPlease make a valid choice (rock, paper or scissor).\n");
@@ -42,8 +36,14 @@ fn main() {
             }
         };
 
-        let round = game.play_round(1, &player, &ai);
+        let round = game.play_round(round_id, &player, &ai);
 
-        println!("Winner: {}", round.get_result());
-    }  
+        println!("Round {round_id} winner: {}", round.get_result());
+
+        game.save_round(round);
+
+        round_id += 1;
+
+        game_on = game.three_wins();
+    }
 }
