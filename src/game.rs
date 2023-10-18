@@ -19,17 +19,13 @@ impl Choice {
 }
 
 pub struct Round {
-    id: u32,
+    _id: usize,
     result: String,
 }
 
 impl Round {
-    pub fn get_result(&self) -> &str {
+    fn get_result(&self) -> &str {
         &self.result
-    }
-
-    pub fn get_round(&self) -> u32 {
-        self.id
     }
 }
 
@@ -42,7 +38,7 @@ impl Game {
         Self { rounds: vec![] }
     }
 
-    pub fn play_round(&self, id: u32, player: &Player, ai: &Player) -> Round {
+    pub fn play(&mut self, id: usize, player: &Player, ai: &Player) {
         let (player_beats, ai_beats) = (player.choice().rules(), ai.choice().rules());
 
         let result = if &player_beats == ai.choice() {
@@ -53,13 +49,16 @@ impl Game {
             String::from("Tie")
         };
 
-        let round = Round { id, result };
+        let round = Round { _id: id, result };
 
-        round
+        self.rounds.push(round);
     }
 
-    pub fn save_round(&mut self, round: Round) {
-        self.rounds.push(round);
+    pub fn get_round_result(&self, id: usize) -> Option<&str> {
+        match self.rounds.get(id - 1) {
+            Some(result) => Some(result.get_result()),
+            None => None,
+        }
     }
 
     pub fn three_wins(&self) -> bool {
@@ -73,7 +72,8 @@ impl Game {
             *count += 1;
         }
 
-        println!("{score:?}");
+        println!("Scoreboard:");
+        println!("{score:?}\n");
 
         // Check for 3 wins
         for (key, value) in score.iter() {
@@ -86,4 +86,14 @@ impl Game {
         }
         true
     }
+}
+
+pub fn setup() -> (Game, Player, Player, usize, String) {
+    let game = Game::new();
+    let player = Player::new("Human", "");
+    let ai = Player::new("Chat-GPT", "paper");
+    let round_id: usize = 1;
+    let result = String::new();
+
+    (game, player, ai, round_id, result)
 }

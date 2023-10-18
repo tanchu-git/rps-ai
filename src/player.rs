@@ -30,15 +30,15 @@ impl Player {
         let result = match choice {
             "rock" => {
                 self.choice = Choice::Rock;
-                Ok(String::from("You choosed rock!"))
+                Ok(String::from("\nYou choosed rock!"))
             }
             "paper" => {
                 self.choice = Choice::Paper;
-                Ok(String::from("You choosed paper!"))
+                Ok(String::from("\nYou choosed paper!"))
             }
             "scissor" => {
                 self.choice = Choice::Scissor;
-                Ok(String::from("You choosed scissor!"))
+                Ok(String::from("\nYou choosed scissor!"))
             }
             _ => Err(()),
         };

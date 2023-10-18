@@ -1,16 +1,12 @@
-use crate::player::Player;
-use game::Game;
 use std::io;
 
 mod game;
 mod player;
 mod test;
+mod ai;
 
 fn main() {
-    let mut game = Game::new();
-    let mut player = Player::new("Human", "");
-    let mut ai = Player::new("Chat-GPT", "paper");
-    let mut round_id = 1;
+    let (mut game, mut player, mut ai, mut round_id, mut result) = game::setup();
 
     println!("Play a game of rock, paper and scissor with Chat-GPT!");
     println!("First to 3 wins!");
@@ -32,16 +28,19 @@ fn main() {
                 println!("{c}");
             }
             Err(()) => {
-                println!("\nPlease make a valid choice (rock, paper or scissor).\n");
+                println!("\nValid choices are (rock, paper or scissor).\n");
                 continue;
             }
         };
 
-        let round = game.play_round(round_id, &player, &ai);
+        game.play(round_id, &player, &ai);
 
-        println!("Round {round_id} winner: {}", round.get_result());
+        result = game
+            .get_round_result(round_id)
+            .expect("Round id should always be greater than 0.")
+            .to_string();
 
-        game.save_round(round);
+        println!("Round {round_id} winner: {result}\n");
 
         round_id += 1;
 
