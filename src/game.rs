@@ -55,7 +55,12 @@ impl Game {
     }
 
     pub fn get_round_result(&self, id: usize) -> Option<&str> {
-        match self.rounds.get(id - 1) {
+        let id = match id {
+            0 => id,
+            _ => id - 1,
+        };
+
+        match self.rounds.get(id) {
             Some(result) => Some(result.get_result()),
             None => None,
         }

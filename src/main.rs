@@ -1,12 +1,15 @@
+use crate::ai::{call_openai_api, Message};
 use std::io;
 
+mod ai;
 mod game;
 mod player;
 mod test;
-mod ai;
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let (mut game, mut player, mut ai, mut round_id, mut result) = game::setup();
+    let mut ai_persona = Message::setup();
 
     println!("Play a game of rock, paper and scissor with Chat-GPT!");
     println!("First to 3 wins!");
@@ -14,6 +17,21 @@ fn main() {
     let mut game_on = true;
 
     while game_on {
+        let message = Message::new_msg(format!(
+            "Round {round_id}. Please make a choice. Rock, paper or scissor?"
+        ));
+
+        ai_persona.push(message);
+
+        let ai_choice = match call_openai_api(ai_persona.clone()).await {
+            Ok(ai_choice) => ai_choice,
+            Err(_) => call_openai_api(ai_persona.clone())
+                .await
+                .expect("Failed twice to call OpenAI"),
+        };
+
+        ai_choice. // todo
+        ai.choose(&ai_choice);
         println!("Please make your choice: ");
 
         let mut choice = String::new();
@@ -37,7 +55,7 @@ fn main() {
 
         result = game
             .get_round_result(round_id)
-            .expect("Round id should always be greater than 0.")
+            .expect("Round id should start at 1 and increment with 1.")
             .to_string();
 
         println!("Round {round_id} winner: {result}\n");

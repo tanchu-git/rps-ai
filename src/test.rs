@@ -22,6 +22,11 @@ mod test {
         #[case] choice: &str,
         #[case] expected: Choice,
     ) {
+        better_panic::Settings::debug()
+            .most_recent_first(false)
+            .lineno_suffix(true)
+            .install();
+
         let (_, mut player, _) = setup;
 
         player.choose(choice).unwrap();
@@ -44,15 +49,18 @@ mod test {
         #[case] ai_choice: &str,
         #[case] winner: &str,
     ) {
+        better_panic::Settings::debug()
+            .most_recent_first(false)
+            .lineno_suffix(true)
+            .install();
+
         let (mut game, mut player, mut ai) = setup;
+        let id = 1;
 
         player.choose(human_choice).unwrap();
         ai.choose(ai_choice).unwrap();
 
-        game.play(1, &player, &ai);
-        assert_eq!(
-            winner,
-            game.get_round_result(1).expect("Should be greater than 0.")
-        );
+        game.play(id, &player, &ai);
+        assert_eq!(winner, game.get_round_result(id).expect("id should be 1."));
     }
 }
