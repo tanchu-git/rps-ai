@@ -1,7 +1,7 @@
 use crate::player::Player;
 use std::collections::HashMap;
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 pub enum Choice {
     Rock,
     Paper,
@@ -85,31 +85,5 @@ impl Game {
             return b;
         }
         true
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    fn test_winner_and_integration() {
-        let game = Game::new();
-
-        let winning_choices = vec!["rock", "paper", "scissor"];
-        let losing_choices = vec!["scissor", "rock", "paper"];
-
-        let mut player = Player::new("Human", "rock");
-        let mut ai = Player::new("Chat-GPT", "rock");
-        let mut round = game.play_round(1, &player, &ai);
-        assert_eq!("Tie", round.get_result());
-
-        let mut losing_iter = losing_choices.iter();
-        for choice in winning_choices {
-            player.choose(choice).unwrap();
-            ai.choose(losing_iter.next().unwrap()).unwrap();
-            round = game.play_round(2, &player, &ai);
-            assert_eq!("Human", round.get_result());
-        }
     }
 }

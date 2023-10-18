@@ -4,6 +4,7 @@ use std::io;
 
 mod game;
 mod player;
+mod test;
 
 fn main() {
     let mut game = Game::new();
