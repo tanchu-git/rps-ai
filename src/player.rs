@@ -27,7 +27,7 @@ impl Player {
     }
 
     pub fn choose(&mut self, choice: &str) -> Result<String, ()> {
-        let result = match choice {
+        match choice {
             "rock" => {
                 self.choice = Choice::Rock;
                 Ok(String::from("\nYou choosed rock!"))
@@ -41,7 +41,6 @@ impl Player {
                 Ok(String::from("\nYou choosed scissor!"))
             }
             _ => Err(()),
-        };
-        result
+        }
     }
 }

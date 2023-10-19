@@ -61,7 +61,7 @@ impl Game {
         };
 
         match self.rounds.get(id) {
-            Some(result) => Some(result.get_result()),
+            Some(round) => Some(round.get_result()),
             None => None,
         }
     }
@@ -81,7 +81,7 @@ impl Game {
         println!("{score:?}\n");
 
         // Check for 3 wins
-        for (key, value) in score.iter() {
+        for (key, value) in &score {
             let b = match value {
                 3 if *key == "Human" || *key == "Chat-GPT" => false,
                 _ => continue,
@@ -96,7 +96,7 @@ impl Game {
 pub fn setup() -> (Game, Player, Player, usize, String) {
     let game = Game::new();
     let player = Player::new("Human", "");
-    let ai = Player::new("Chat-GPT", "paper");
+    let ai = Player::new("Chat-GPT", "");
     let round_id: usize = 1;
     let result = String::new();
 

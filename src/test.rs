@@ -1,8 +1,10 @@
 #[cfg(test)]
 mod test {
+    use crate::ai::*;
     use crate::game::*;
     use crate::player::*;
     use rstest::{fixture, rstest};
+    use std::time::Duration;
 
     #[fixture]
     fn setup() -> (Game, Player, Player) {
@@ -62,5 +64,69 @@ mod test {
 
         game.play(id, &player, &ai);
         assert_eq!(winner, game.get_round_result(id).expect("id should be 1."));
+    }
+
+    #[tokio::test]
+    async fn test_calling_gpt() {
+        better_panic::Settings::debug()
+            .most_recent_first(false)
+            .lineno_suffix(true)
+            .install();
+
+        let mut chat_completion = ChatCompletion::setup();
+
+        let mut message = format!("Round 1. Please make a choice. Rock, paper or scissor?");
+
+        chat_completion.save_msg(message);
+
+        match call_openai_api(&chat_completion).await {
+            Ok(ai_response) => {
+                dbg!(ai_response);
+                assert!(true)
+            }
+            Err(_) => assert!(false),
+        }
+
+        tokio::time::sleep(Duration::from_secs(1)).await;
+
+        message = format!("I won round 1. Please make a comment.");
+
+        chat_completion.save_msg(message);
+
+        match call_openai_api(&chat_completion).await {
+            Ok(ai_response) => {
+                dbg!(ai_response);
+                assert!(true)
+            }
+            Err(_) => assert!(false),
+        }
+
+        tokio::time::sleep(Duration::from_secs(1)).await;
+
+        message = format!("Round 2. Please make a choice. Rock, paper or scissor?");
+
+        chat_completion.save_msg(message);
+
+        match call_openai_api(&chat_completion).await {
+            Ok(ai_response) => {
+                dbg!(ai_response);
+                assert!(true)
+            }
+            Err(_) => assert!(false),
+        }
+
+        tokio::time::sleep(Duration::from_secs(1)).await;
+
+        message = format!("You won round 2. Please make a comment.");
+
+        chat_completion.save_msg(message);
+
+        match call_openai_api(&chat_completion).await {
+            Ok(ai_response) => {
+                dbg!(ai_response);
+                assert!(true)
+            }
+            Err(_) => assert!(false),
+        }
     }
 }

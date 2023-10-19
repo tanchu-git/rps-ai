@@ -10,20 +10,34 @@ use std::{env, error::Error};
 // messages - chat history
 // temperature - ai creativity
 #[derive(Debug, Serialize)]
-struct ChatCompletion<'a> {
+pub struct ChatCompletion {
     model: String,
-    messages: &'a Vec<ChatMessage>,
+    messages: Vec<ChatMessage>,
     temperature: f32,
 }
 
+impl ChatCompletion {
+    pub fn setup() -> Self {
+        Self {
+            model: "gpt-4".to_string(),
+            messages: ChatMessage::setup(),
+            temperature: 0.5,
+        }
+    }
+
+    pub fn save_msg(&mut self, message: String) {
+        self.messages.push(ChatMessage::new_msg(message));
+    }
+}
+
 #[derive(Debug, Serialize)]
-pub struct ChatMessage {
+struct ChatMessage {
     role: String,
     content: String,
 }
 
 impl ChatMessage {
-    pub fn setup() -> Vec<Self> {
+    fn setup() -> Vec<Self> {
         let persona = ChatMessage {
             role: String::from("system"),
             content: String::from(
@@ -41,7 +55,7 @@ impl ChatMessage {
         vec![persona]
     }
 
-    pub fn new_msg(message: String) -> Self {
+    fn new_msg(message: String) -> Self {
         Self {
             role: String::from("user"),
             content: message,
@@ -68,18 +82,18 @@ struct Message {
 
 // Call OpenAI API
 // Map any non env errors to heap and propagate out of the function
-pub async fn call_openai_api(messages: &Vec<ChatMessage>) -> Result<String, Box<dyn Error + Send>> {
+pub async fn call_openai_api(
+    chat_completion: &ChatCompletion,
+) -> Result<String, Box<dyn Error + Send>> {
     dotenv().ok();
-
+    
     // Extract API key & org
-    let api_key = match env::var("OPEN_AI_KEY") {
-        Ok(key) => key,
-        Err(_) => panic!("OPEN_AI_KEY env variable NOT found!"),
+    let Ok(api_key) = env::var("OPEN_AI_KEY") else {
+        panic!("OPEN_AI_KEY env variable NOT found!")
     };
 
-    let api_org = match env::var("OPEN_AI_ORG") {
-        Ok(org) => org,
-        Err(_) => panic!("OPEN_AI_ORG env variable NOT found!"),
+    let Ok(api_org) = env::var("OPEN_AI_ORG") else {
+        panic!("OPEN_AI_ORG env variable NOT found!")
     };
 
     // Set OpenAI API endpoint
@@ -110,18 +124,11 @@ pub async fn call_openai_api(messages: &Vec<ChatMessage>) -> Result<String, Box<
         .build()
         .map_err(|e| -> Box<dyn Error + Send> { Box::new(e) })?;
 
-    // Create chat completion for AI to derive a response
-    let chat_completion = ChatCompletion {
-        model: "gpt-4".to_string(),
-        messages,
-        temperature: 0.5,
-    };
-
     // Construct a Request and a JSON body from ChatCompletion
     // Make request and deserialize response as JSON body
     let response: Response = client
         .post(url)
-        .json(&chat_completion)
+        .json(chat_completion)
         .send()
         .await
         .map_err(|e| -> Box<dyn Error + Send> { Box::new(e) })?
@@ -132,55 +139,4 @@ pub async fn call_openai_api(messages: &Vec<ChatMessage>) -> Result<String, Box<
     // Return extracted response
     // ["choices": -> "message": -> { "content": -> String }]
     Ok(response.choices[0].message.content.clone())
-}
-
-#[cfg(test)]
-mod test {
-    use std::time::Duration;
-
-    use super::*;
-
-    #[tokio::test]
-    async fn test_calling_gpt() {
-        better_panic::Settings::debug()
-            .most_recent_first(false)
-            .lineno_suffix(true)
-            .install();
-
-        let persona = ChatMessage {
-            role: String::from("system"),
-            content: String::from("You should be snarky and uptight with your answers"),
-        };
-
-        let mut ai_persona = vec![persona];
-
-        let message = ChatMessage {
-            role: "user".to_string(),
-            content: "Just testing. Give me a short reply so I know it works!".to_string(),
-        };
-
-        ai_persona.push(message);
-
-        match call_openai_api(&ai_persona).await {
-            Ok(ai_response) => {
-                dbg!(ai_response);
-                assert!(true)
-            }
-            Err(_) => assert!(false),
-        }
-
-        tokio::time::sleep(Duration::from_secs(3)).await;
-
-        let msg = ChatMessage::new_msg(String::from("Is it raining now?"));
-
-        ai_persona.push(msg);
-
-        match call_openai_api(&ai_persona).await {
-            Ok(ai_response) => {
-                dbg!(ai_response);
-                assert!(true)
-            }
-            Err(_) => assert!(false),
-        }
-    }
 }
