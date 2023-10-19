@@ -1,4 +1,4 @@
-use crate::ai::{call_openai_api, Message};
+use crate::ai::{call_openai_api, ChatMessage};
 use std::io;
 
 mod ai;
@@ -9,7 +9,7 @@ mod test;
 #[tokio::main]
 async fn main() {
     let (mut game, mut player, mut ai, mut round_id, mut result) = game::setup();
-    let mut ai_persona = Message::setup();
+    let mut ai_persona = ChatMessage::setup();
 
     println!("Play a game of rock, paper and scissor with Chat-GPT!");
     println!("First to 3 wins!");
@@ -17,21 +17,21 @@ async fn main() {
     let mut game_on = true;
 
     while game_on {
-        let message = Message::new_msg(format!(
+        let message = ChatMessage::new_msg(format!(
             "Round {round_id}. Please make a choice. Rock, paper or scissor?"
         ));
 
         ai_persona.push(message);
 
-        let ai_choice = match call_openai_api(ai_persona.clone()).await {
+        let ai_choice = match call_openai_api(&ai_persona).await {
             Ok(ai_choice) => ai_choice,
-            Err(_) => call_openai_api(ai_persona.clone())
+            Err(_) => call_openai_api(&ai_persona)
                 .await
                 .expect("Failed twice to call OpenAI"),
         };
 
-        ai_choice. // todo
-        ai.choose(&ai_choice);
+        ai.choose(&ai_choice).unwrap(); //todo!
+
         println!("Please make your choice: ");
 
         let mut choice = String::new();
