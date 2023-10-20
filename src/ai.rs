@@ -90,11 +90,13 @@ pub async fn call_openai_api(chat_completion: &ChatCompletion) -> Result<String,
 
     // Extract API key & org
     let Ok(api_key) = env::var("OPEN_AI_KEY") else {
-        panic!("OPEN_AI_KEY env variable NOT found!")
+        eprintln!("OPEN_AI_KEY env variable NOT found!");
+        process::exit(256);
     };
 
     let Ok(api_org) = env::var("OPEN_AI_ORG") else {
-        panic!("OPEN_AI_ORG env variable NOT found!")
+        eprintln!("OPEN_AI_ORG env variable NOT found!");
+        process::exit(256);
     };
 
     // Set OpenAI API endpoint
