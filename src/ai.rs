@@ -4,10 +4,10 @@ use reqwest::{
     Client,
 };
 use serde::{Deserialize, Serialize};
-use std::{env, error::Error};
+use std::{env, process};
 
 // model - which llm to use i.e GPT-4
-// messages - chat history
+// messages - interaction history
 // temperature - ai creativity
 #[derive(Debug, Serialize)]
 pub struct ChatCompletion {
@@ -19,14 +19,15 @@ pub struct ChatCompletion {
 impl ChatCompletion {
     pub fn setup() -> Self {
         Self {
-            model: "gpt-4".to_string(),
+            model: String::from("gpt-4"),
             messages: ChatMessage::setup(),
-            temperature: 0.5,
+            temperature: 0.2,
         }
     }
 
-    pub fn save_msg(&mut self, message: String) {
-        self.messages.push(ChatMessage::new_msg(message));
+    // Save interaction history
+    pub fn save_msg(&mut self, role: &String, content: String) {
+        self.messages.push(ChatMessage::save(role, content));
     }
 }
 
@@ -41,24 +42,24 @@ impl ChatMessage {
         let persona = ChatMessage {
             role: String::from("system"),
             content: String::from(
-                "You and I are going to play a game of rock, paper and scissor. The
-                first one with 3 wins, wins the whole game.
-                When you are asked to make a choice. Please provide ONLY one word 
+                "You the AI and a human are going to play a game of rock, paper and scissor.
+                The first one with 3 wins, wins the whole game.
+                When you are asked to make a choice. Please provide ONLY one word
                 for an answer, so either 'ROCK', 'PAPER' or 'SCISSOR'. BUT when you
                 are asked to provide commentary for how the game is going, you SHOULD
                 be SNARKY and UPTIGHT with your commentary. You should be a LOUSY
-                winner if you currently have more wins than me. And you should be a SORE loser if
-                I currently have more wins than you.",
+                winner if you currently have more wins than the human. And you should
+                be a SORE loser if human currently have more wins than you.",
             ),
         };
 
         vec![persona]
     }
 
-    fn new_msg(message: String) -> Self {
+    fn save(role: &String, content: String) -> Self {
         Self {
-            role: String::from("user"),
-            content: message,
+            role: String::from(role),
+            content,
         }
     }
 }
@@ -80,13 +81,13 @@ struct Message {
     content: String,
 }
 
+type APIError = Box<dyn std::error::Error + Send>;
+
 // Call OpenAI API
 // Map any non env errors to heap and propagate out of the function
-pub async fn call_openai_api(
-    chat_completion: &ChatCompletion,
-) -> Result<String, Box<dyn Error + Send>> {
+pub async fn call_openai_api(chat_completion: &ChatCompletion) -> Result<String, APIError> {
     dotenv().ok();
-    
+
     // Extract API key & org
     let Ok(api_key) = env::var("OPEN_AI_KEY") else {
         panic!("OPEN_AI_KEY env variable NOT found!")
@@ -107,14 +108,14 @@ pub async fn call_openai_api(
     headers.insert(
         "Authorization",
         HeaderValue::from_str(&format!("Bearer {api_key}"))
-            .map_err(|e| -> Box<dyn Error + Send> { Box::new(e) })?,
+            .map_err(|e| -> APIError { Box::new(e) })?,
     );
 
     // Create API org header
     // Propagate errors out of the function for the caller to handle
     headers.insert(
         "OpenAI-Organization",
-        HeaderValue::from_str(&api_org).map_err(|e| -> Box<dyn Error + Send> { Box::new(e) })?,
+        HeaderValue::from_str(&api_org).map_err(|e| -> APIError { Box::new(e) })?,
     );
 
     // Create client to make Requests with
@@ -122,7 +123,7 @@ pub async fn call_openai_api(
     let client = Client::builder()
         .default_headers(headers)
         .build()
-        .map_err(|e| -> Box<dyn Error + Send> { Box::new(e) })?;
+        .map_err(|e| -> APIError { Box::new(e) })?;
 
     // Construct a Request and a JSON body from ChatCompletion
     // Make request and deserialize response as JSON body
@@ -131,12 +132,23 @@ pub async fn call_openai_api(
         .json(chat_completion)
         .send()
         .await
-        .map_err(|e| -> Box<dyn Error + Send> { Box::new(e) })?
+        .map_err(|e| -> APIError { Box::new(e) })?
         .json()
         .await
-        .map_err(|e| -> Box<dyn Error + Send> { Box::new(e) })?;
+        .map_err(|e| -> APIError { Box::new(e) })?;
 
     // Return extracted response
     // ["choices": -> "message": -> { "content": -> String }]
     Ok(response.choices[0].message.content.clone())
+}
+
+// Retry calling API endpoint
+// Exit app with error message if retry failed
+pub async fn retry(chat_completion: &ChatCompletion) -> String {
+    call_openai_api(&chat_completion)
+        .await
+        .unwrap_or_else(|err| {
+            eprintln!("API error: {err}");
+            process::exit(256);
+        })
 }

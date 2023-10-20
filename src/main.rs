@@ -1,7 +1,6 @@
 use std::io;
-use std::time::Duration;
 
-use crate::ai::{call_openai_api, ChatCompletion};
+use crate::ai::{call_openai_api, retry, ChatCompletion};
 
 mod ai;
 mod game;
@@ -11,7 +10,7 @@ mod test;
 #[tokio::main]
 async fn main() {
     // Setups
-    let (mut game, mut player, mut ai, mut round_id, mut result) = game::setup();
+    let (mut game, mut player, mut ai, mut round_id, user, assistant) = game::setup();
     let mut chat_completion = ChatCompletion::setup();
 
     println!("Play a game of rock, paper and scissor with Chat-GPT!");
@@ -19,88 +18,76 @@ async fn main() {
 
     let mut game_on = true;
 
-    // Play until 3 wins
+    // Start game
     while game_on {
-        // Chat-GPT
+        // Chat-GPT interaction
         let mut message =
             format!("Round {round_id}. Please make a choice. Rock, paper or scissor?");
 
-        chat_completion.save_msg(message);
+        chat_completion.save_msg(&user, message);
 
         // Get Chat-GPT choice
         let ai_choice = match call_openai_api(&chat_completion).await {
             Ok(ai_choice) => ai_choice.to_lowercase(),
-            Err(_) => call_openai_api(&chat_completion)
-                .await
-                .expect("Failed twice to call OpenAI"),
+            Err(_) => retry(&chat_completion).await,
         };
 
         ai.choose(&ai_choice).unwrap_or(String::from("rock"));
 
-        // User
+        // User interaction
         println!("Please make your choice: ");
 
-        let mut choice = String::new();
-
         // Get user choice from terminal
-        io::stdin()
-            .read_line(&mut choice)
-            .expect("Failed to read input");
+        'inner: loop {
+            let mut choice = String::new();
+            io::stdin()
+                .read_line(&mut choice)
+                .expect("Should read the input from terminal.");
 
-        if let Ok(c) = player.choose(&choice.trim().to_lowercase()) {
-            println!("{c}");
-        } else {
-            println!("\nValid choices are (rock, paper or scissor).\n");
-            continue;
-        };
+            if let Ok(c) = player.choose(&choice.trim().to_lowercase()) {
+                println!("{c}");
+                break 'inner;
+            } else {
+                println!("\nValid choices are (rock, paper or scissor).\n");
+                continue 'inner;
+            };
+        }
 
         println!("Chat-GPT choosed {ai_choice}!");
 
-        // Game
+        chat_completion.save_msg(&assistant, ai_choice);
+
+        // Game start
         // Play the round and get the winner
         game.play(round_id, &player, &ai);
 
-        result = game
+        let result = game
             .get_round_result(round_id)
             .expect("Round id should start at 1 and increment with 1.")
             .to_string();
 
-        println!("Round {round_id} winner: {result}\n");
+        println!("Round {round_id} winner: {result}");
 
-        // Chat-GPT
+        game.update_scoreboard();
+
+        // Chat-GPT interaction
+        message = game.get_comment(&result, round_id);
+        println!("{message}");
+
+        chat_completion.save_msg(&assistant, message);
+
         // Get Chat-GPT comment about the round
-        message = match &result[..] {
-            "Human" => if game.three_wins() {
-                format!("I won round {round_id}. Please make a comment.")
-            } else {
-                "I have got 3 wins, I won the whole game! Please make a comment.".to_string()
-            }
-            "Chat-GPT" => if game.three_wins() {
-                format!("You won round {round_id}. Please make a comment.")
-            } else {
-                "You have got 3 wins, You won the whole game! Please make a comment.".to_string()
-            }
-            _ => format!("We tied round {round_id}. Please make a comment."),
-        };
-
-        chat_completion.save_msg(message);
-
         let ai_comment = match call_openai_api(&chat_completion).await {
-            Ok(ai_choice) => ai_choice,
-            Err(_) => call_openai_api(&chat_completion)
-                .await
-                .expect("Failed twice to call OpenAI"),
+            Ok(ai_comment) => ai_comment,
+            Err(_) => retry(&chat_completion).await,
         };
-
-        // Give Chat-GPT some time to make a commentary
-        tokio::time::sleep(Duration::from_secs(1)).await;
-
-        // Game
         println!("Chat-GPT: {ai_comment}\n");
 
-        // Next round -> next loop
+        chat_completion.save_msg(&assistant, ai_comment);
+
         round_id += 1;
 
+        // Play until 3 wins
         game_on = game.three_wins();
     }
 }

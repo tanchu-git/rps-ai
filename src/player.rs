@@ -1,4 +1,20 @@
-use crate::game::Choice;
+#[derive(PartialEq, Debug)]
+pub enum Choice {
+    Rock,
+    Paper,
+    Scissor,
+}
+
+// Input a choice and output the losing choice against it
+impl Choice {
+    pub fn rules(&self) -> Self {
+        match self {
+            Choice::Rock => Choice::Scissor,
+            Choice::Paper => Choice::Rock,
+            Choice::Scissor => Choice::Paper,
+        }
+    }
+}
 
 pub struct Player {
     name: String,
@@ -14,13 +30,13 @@ impl Player {
         };
 
         Self {
-            name: name.to_string(),
+            name: String::from(name),
             choice,
         }
     }
 
-    pub fn get_name(&self) -> &String {
-        &self.name
+    pub fn get_name(&self) -> String {
+        String::from(&self.name)
     }
     pub fn choice(&self) -> &Choice {
         &self.choice
