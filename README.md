@@ -1,4 +1,7 @@
 # rps-ai
 Rock, paper, scissor game with Chat-GPT.
 
-![rps-1](https://github.com/tanchu-git/rps-ai/assets/139019601/6719a787-c224-4ebb-9d36-babd9678abf0)
+
+
+https://github.com/tanchu-git/rps-ai/assets/139019601/1bfd9d5f-27eb-472f-a1c2-367d2ff63052
+
