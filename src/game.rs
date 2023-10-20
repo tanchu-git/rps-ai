@@ -74,7 +74,7 @@ impl Game {
     pub fn three_wins(&self) -> bool {
         for (key, value) in &self.scoreboard {
             let b = match value {
-                3 if *key == "Human" || *key == "Chat-GPT" => false,
+                3 if *key == "Human" || *key == "GPT-4" => false,
                 _ => continue,
             };
 
@@ -83,7 +83,7 @@ impl Game {
         true
     }
 
-    // Ask Chat-GPT for commentary about the state of the game
+    // Ask GPT-4 for commentary about the state of the game
     pub fn get_comment(&self, result: &String, round_id: usize) -> String {
         match &result[..] {
             "Human" => {
@@ -95,7 +95,7 @@ impl Game {
                     )
                 }
             }
-            "Chat-GPT" => {
+            "GPT-4" => {
                 if self.three_wins() {
                     format!("You the AI won round {round_id}. Please make a comment.")
                 } else {
@@ -111,7 +111,7 @@ impl Game {
 pub fn setup() -> (Game, Player, Player, usize, String, String) {
     let game = Game::new();
     let player = Player::new("Human", "");
-    let ai = Player::new("Chat-GPT", "");
+    let ai = Player::new("GPT-4", "");
     let round_id: usize = 1;
     let user = String::from("user");
     let assistant = String::from("assistant");

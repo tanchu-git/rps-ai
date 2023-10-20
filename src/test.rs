@@ -9,7 +9,7 @@ mod test {
     fn setup() -> (Game, Player, Player) {
         let game = Game::new();
         let player = Player::new("Human", "");
-        let ai = Player::new("Chat-GPT", "");
+        let ai = Player::new("GPT-4", "");
 
         (game, player, ai)
     }
@@ -35,15 +35,15 @@ mod test {
     }
 
     #[rstest]
-    #[case("rock", "paper", "Chat-GPT")]
+    #[case("rock", "paper", "GPT-4")]
     #[case("rock", "scissor", "Human")]
     #[case("rock", "rock", "Tie")]
     #[case("paper", "paper", "Tie")]
-    #[case("paper", "scissor", "Chat-GPT")]
+    #[case("paper", "scissor", "GPT-4")]
     #[case("paper", "rock", "Human")]
     #[case("scissor", "paper", "Human")]
     #[case("scissor", "scissor", "Tie")]
-    #[case("scissor", "rock", "Chat-GPT")]
+    #[case("scissor", "rock", "GPT-4")]
     fn test_game_play_integration_winner(
         setup: (Game, Player, Player),
         #[case] human_choice: &str,

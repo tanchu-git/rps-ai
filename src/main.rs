@@ -21,7 +21,7 @@ async fn main() {
     let mut stdout: std::io::Stdout = stdout();
     stdout.execute(SetForegroundColor(Color::Blue)).ok();
 
-    println!("Play a game of rock, paper and scissor with Chat-GPT!");
+    println!("Play a game of rock, paper and scissor with GPT-4!");
     println!("First to 3 wins!");
 
     let mut game_on = true;
@@ -34,7 +34,7 @@ async fn main() {
         // Save chat history
         chat_completion.save_msg(&user, message);
 
-        // Get Chat-GPT choice
+        // Get GPT-4 choice
         let ai_choice = match call_openai_api(&chat_completion).await {
             Ok(ai_choice) => ai_choice.to_lowercase(),
             Err(_) => retry(&chat_completion).await,
@@ -64,7 +64,7 @@ async fn main() {
             };
         }
 
-        println!("Chat-GPT choosed {ai_choice}!");
+        println!("GPT-4 choosed {ai_choice}!");
 
         // Save chat history
         chat_completion.save_msg(&assistant, ai_choice);
@@ -87,15 +87,15 @@ async fn main() {
         // Save chat history
         chat_completion.save_msg(&assistant, message);
 
-        // Get Chat-GPT comment about the round
+        // Get GPT-4 comment about the round
         let ai_comment = match call_openai_api(&chat_completion).await {
             Ok(ai_comment) => ai_comment,
             Err(_) => retry(&chat_completion).await,
         };
 
-        // Set Chat-GPT colour
+        // Set GPT-4 colour
         stdout.execute(SetForegroundColor(Color::Yellow)).ok();
-        println!("Chat-GPT: {ai_comment}\n");
+        println!("GPT-4: {ai_comment}\n");
 
         // Save chat history
         chat_completion.save_msg(&assistant, ai_comment);
