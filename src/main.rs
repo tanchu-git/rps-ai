@@ -1,4 +1,8 @@
-use std::io;
+use std::io::{stdin, stdout};
+use crossterm::{
+    style::{Color, SetForegroundColor},
+    ExecutableCommand,
+};
 
 use crate::ai::{call_openai_api, retry, ChatCompletion};
 
@@ -13,16 +17,21 @@ async fn main() {
     let (mut game, mut player, mut ai, mut round_id, user, assistant) = game::setup();
     let mut chat_completion = ChatCompletion::setup();
 
+    // Colour style for terminal output
+    let mut stdout: std::io::Stdout = stdout();
+    stdout.execute(SetForegroundColor(Color::Blue)).ok();
+
     println!("Play a game of rock, paper and scissor with Chat-GPT!");
     println!("First to 3 wins!");
 
     let mut game_on = true;
 
     // Start game
-    while game_on {
+    while game_on {      
         let mut message =
             format!("Round {round_id}. Please make a choice. Rock, paper or scissor?");
 
+        // Save chat history
         chat_completion.save_msg(&user, message);
 
         // Get Chat-GPT choice
@@ -31,14 +40,14 @@ async fn main() {
             Err(_) => retry(&chat_completion).await,
         };
 
-        ai.choose(&ai_choice).unwrap_or(String::from("rock"));
+        ai.choose(&ai_choice).unwrap_or(String::from("scissor"));
 
         println!("Please make your choice: ");
 
         // Get user choice from terminal
         'inner: loop {
             let mut choice = String::new();
-            io::stdin()
+            stdin()
                 .read_line(&mut choice)
                 .expect("Should read the input from terminal.");
 
@@ -46,13 +55,18 @@ async fn main() {
                 println!("{c}");
                 break 'inner;
             } else {
-                println!("\nValid choices are (rock, paper or scissor).\n");
+                // Set warning colour
+                stdout.execute(SetForegroundColor(Color::Red)).ok();
+                println!("\nPlease input valid choice (rock, paper or scissor): ");
+                stdout.execute(SetForegroundColor(Color::Blue)).ok();
+
                 continue 'inner;
             };
         }
 
         println!("Chat-GPT choosed {ai_choice}!");
 
+        // Save chat history
         chat_completion.save_msg(&assistant, ai_choice);
 
         // Play the round and get the winner
@@ -70,6 +84,7 @@ async fn main() {
         message = game.get_comment(&result, round_id);
         println!("{message}");
 
+        // Save chat history
         chat_completion.save_msg(&assistant, message);
 
         // Get Chat-GPT comment about the round
@@ -77,13 +92,18 @@ async fn main() {
             Ok(ai_comment) => ai_comment,
             Err(_) => retry(&chat_completion).await,
         };
+
+        // Set Chat-GPT colour
+        stdout.execute(SetForegroundColor(Color::Yellow)).ok();
         println!("Chat-GPT: {ai_comment}\n");
 
+        // Save chat history
         chat_completion.save_msg(&assistant, ai_comment);
 
         round_id += 1;
 
         // Play until 3 wins
         game_on = game.three_wins();
+        stdout.execute(SetForegroundColor(Color::Blue)).ok();
     }
 }
