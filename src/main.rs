@@ -20,7 +20,6 @@ async fn main() {
 
     // Start game
     while game_on {
-        // Chat-GPT interaction
         let mut message =
             format!("Round {round_id}. Please make a choice. Rock, paper or scissor?");
 
@@ -34,7 +33,6 @@ async fn main() {
 
         ai.choose(&ai_choice).unwrap_or(String::from("rock"));
 
-        // User interaction
         println!("Please make your choice: ");
 
         // Get user choice from terminal
@@ -57,7 +55,6 @@ async fn main() {
 
         chat_completion.save_msg(&assistant, ai_choice);
 
-        // Game start
         // Play the round and get the winner
         game.play(round_id, &player, &ai);
 
@@ -70,7 +67,6 @@ async fn main() {
 
         game.update_scoreboard();
 
-        // Chat-GPT interaction
         message = game.get_comment(&result, round_id);
         println!("{message}");
 

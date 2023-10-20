@@ -105,30 +105,26 @@ pub async fn call_openai_api(chat_completion: &ChatCompletion) -> Result<String,
     // Create headers for OpenAI API
     let mut headers: HeaderMap = HeaderMap::new();
 
-    // Create API key header
-    // Propagate errors out of the function for the caller to handle
+    // Create API key and org header and return error to caller
     headers.insert(
         "Authorization",
         HeaderValue::from_str(&format!("Bearer {api_key}"))
             .map_err(|e| -> APIError { Box::new(e) })?,
     );
 
-    // Create API org header
-    // Propagate errors out of the function for the caller to handle
     headers.insert(
         "OpenAI-Organization",
         HeaderValue::from_str(&api_org).map_err(|e| -> APIError { Box::new(e) })?,
     );
 
-    // Create client to make Requests with
-    // Propagate errors out of the function for the caller to handle
+    // Create client to make Requests with and return error to caller
     let client = Client::builder()
         .default_headers(headers)
         .build()
         .map_err(|e| -> APIError { Box::new(e) })?;
 
-    // Construct a Request and a JSON body from ChatCompletion
-    // Make request and deserialize response as JSON body
+    // Build a Request and create a JSON body from ChatCompletion
+    // Deserialize response as JSON body and return any error to caller
     let response: Response = client
         .post(url)
         .json(chat_completion)
