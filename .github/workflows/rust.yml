@@ -16,10 +16,8 @@ jobs:
 
     steps:      
     - uses: actions/checkout@v3
-    - name: Build
-      run: cargo build --verbose
     - name: Run tests
       run: cargo test --verbose -- --nocapture
       env:
         OPEN_AI_ORG: ${{ secrets.OPEN_AI_ORG }}
-        OPEN_AI_KEY: ${{ secrets.OPEN_AI_KEY }}
+        OPEN_AI_KEY: ${{ secrets.OPEN_AI_KE }}
