@@ -13,11 +13,12 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
+    environment: .env
 
     steps:      
     - uses: actions/checkout@v3
     - name: Run tests
       run: cargo test --verbose -- --nocapture
       env:
-        OPEN_AI_ORG: ${{ secrets.OPEN_AI_ORG }}
-        OPEN_AI_KEY: ${{ secrets.OPEN_AI_KE }}
+        OPEN_AI_ORG: ${{ env.OPEN_AI_ORG }}
+        OPEN_AI_KEY: ${{ secrets.OPEN_AI_KEY }}
