@@ -12,7 +12,8 @@ env:
 jobs:
   build:
 
-    runs-on: ubuntu-latest    
+    runs-on: ubuntu-latest
+    environment: .env
 
     steps:
     - uses: actions/checkout@v3
