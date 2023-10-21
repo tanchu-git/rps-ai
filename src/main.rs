@@ -9,6 +9,7 @@ use crate::ai::{call_openai_api, retry, ChatCompletion};
 mod ai;
 mod game;
 mod player;
+mod test;
 
 #[tokio::main]
 async fn main() {
