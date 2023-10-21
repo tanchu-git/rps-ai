@@ -8,7 +8,7 @@ use std::{env, process};
 
 // model - which llm to use i.e GPT-4
 // messages - interaction history
-// temperature - ai creativity
+// temperature - ai response creativity
 #[derive(Debug, Serialize)]
 pub struct ChatCompletion {
     model: String,
@@ -39,6 +39,7 @@ struct ChatMessage {
 
 impl ChatMessage {
     fn setup() -> Vec<Self> {
+        // Set AI persona and instructions
         let persona = ChatMessage {
             role: String::from("system"),
             content: String::from(
@@ -65,7 +66,7 @@ impl ChatMessage {
 }
 
 // Three nested structs to model GPT-4 response from API
-// nested JSON file - ["choices": "message": { "content": String }]
+// Nested JSON file - ["choices": "message": {"content": String}]
 #[derive(Debug, Deserialize)]
 struct Response {
     choices: Vec<Choice>,
@@ -84,11 +85,12 @@ struct Message {
 type APIError = Box<dyn std::error::Error + Send>;
 
 // Call OpenAI API
-// Map any non env errors to heap and propagate out of the function
+// Map any non env errors to Box<T> and propagate out of the function
 pub async fn call_openai_api(chat_completion: &ChatCompletion) -> Result<String, APIError> {
     dotenv().ok();
 
     // Extract API key & org
+    // Exit app if error
     let Ok(api_key) = env::var("OPEN_AI_KEY") else {
         eprintln!("OPEN_AI_KEY env variable NOT found!");
         process::exit(256);
@@ -136,7 +138,7 @@ pub async fn call_openai_api(chat_completion: &ChatCompletion) -> Result<String,
         .map_err(|e| -> APIError { Box::new(e) })?;
 
     // Return extracted response
-    // ["choices": -> "message": -> { "content": -> String }]
+    // ["choices": -> "message": -> {"content": -> String}]
     Ok(response.choices[0].message.content.clone())
 }
 

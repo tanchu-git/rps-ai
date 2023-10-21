@@ -25,7 +25,7 @@ impl Game {
         }
     }
 
-    // Using Choice::rules() to get the winner
+    // Using Player::Choice::rules() to get the winner
     pub fn play(&mut self, id: usize, player: &Player, ai: &Player) {
         let (player_beats, ai_beats) = (player.choice().rules(), ai.choice().rules());
 

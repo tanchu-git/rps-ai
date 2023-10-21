@@ -38,6 +38,7 @@ impl Player {
     pub fn get_name(&self) -> String {
         String::from(&self.name)
     }
+    
     pub fn choice(&self) -> &Choice {
         &self.choice
     }

@@ -1,5 +1,5 @@
 #[cfg(test)]
-mod test {
+mod tests {
     use crate::ai::*;
     use crate::game::*;
     use crate::player::*;
