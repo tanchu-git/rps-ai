@@ -76,7 +76,7 @@ mod tests {
 
         let mut chat_completion = ChatCompletion::setup();
 
-        let message = format!("Round 1. Please make a choice. Rock, paper or scissor?");
+        let message = String::from("Round 1. Please make a choice. Rock, paper or scissor?");
 
         chat_completion.save_msg(&user, message);
 

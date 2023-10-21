@@ -145,7 +145,7 @@ pub async fn call_openai_api(chat_completion: &ChatCompletion) -> Result<String,
 // Retry calling API endpoint
 // Exit app with error message if retry failed
 pub async fn retry(chat_completion: &ChatCompletion) -> String {
-    call_openai_api(&chat_completion)
+    call_openai_api(chat_completion)
         .await
         .unwrap_or_else(|err| {
             eprintln!("API error: {err}");

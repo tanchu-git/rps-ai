@@ -1,15 +1,14 @@
-use std::io::{stdin, stdout};
 use crossterm::{
     style::{Color, SetForegroundColor},
     ExecutableCommand,
 };
+use std::io::{stdin, stdout};
 
 use crate::ai::{call_openai_api, retry, ChatCompletion};
 
 mod ai;
 mod game;
 mod player;
-mod test;
 
 #[tokio::main]
 async fn main() {
@@ -27,7 +26,7 @@ async fn main() {
     let mut game_on = true;
 
     // Start game
-    while game_on {      
+    while game_on {
         let mut message =
             format!("Round {round_id}. Please make a choice. Rock, paper or scissor?");
 
@@ -54,14 +53,11 @@ async fn main() {
             if let Ok(c) = player.choose(&choice.trim().to_lowercase()) {
                 println!("{c}");
                 break 'inner;
-            } else {
-                // Set warning colour
-                stdout.execute(SetForegroundColor(Color::Red)).ok();
-                println!("\nPlease input valid choice (rock, paper or scissor): ");
-                stdout.execute(SetForegroundColor(Color::Blue)).ok();
-
-                continue 'inner;
-            };
+            }
+            // Set warning colour
+            stdout.execute(SetForegroundColor(Color::Red)).ok();
+            println!("\nPlease input valid choice (rock, paper or scissor): ");
+            stdout.execute(SetForegroundColor(Color::Blue)).ok();
         }
 
         println!("GPT-4 choosed {ai_choice}!");

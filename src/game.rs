@@ -84,8 +84,8 @@ impl Game {
     }
 
     // Ask GPT-4 for commentary about the state of the game
-    pub fn get_comment(&self, result: &String, round_id: usize) -> String {
-        match &result[..] {
+    pub fn get_comment(&self, result: &str, round_id: usize) -> String {
+        match result {
             "Human" => {
                 if self.three_wins() {
                     format!("Human won round {round_id}. Please make a comment.")
