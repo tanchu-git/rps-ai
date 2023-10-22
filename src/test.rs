@@ -81,11 +81,8 @@ mod tests {
         chat_completion.save_msg(&user, message);
 
         match call_openai_api(&chat_completion).await {
-            Ok(ai_response) => {
-                dbg!(ai_response);
-                assert!(true)
-            }
-            Err(_) => assert!(false),
+            Ok(ai_response) => assert_eq!(&ai_response, "ROCK"),
+            Err(_) => panic!(),
         }
     }
 }
